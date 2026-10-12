@@ -1,22 +1,23 @@
 import { Request, Response, NextFunction } from 'express';
-import crypto from 'crypto';
+import { Sessions } from '../services/sessions.ts';
 
-// In-memory token store for admin sessions
-const activeSessions = new Set<string>();
-
-const ADMIN_EMAIL = 'admin@net';
-const ADMIN_PASSWORD = 'admin123';
+const isHosted = process.env.NODE_ENV === 'production' || !!process.env.VERCEL;
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || (isHosted ? '' : 'admin@net');
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || (isHosted ? '' : 'admin123');
 
 export class AuthController {
   /**
    * POST /api/auth/login
    * Authenticate admin with email and password
    */
-  static login(req: Request, res: Response) {
+  static async login(req: Request, res: Response) {
     try {
-      const { email, password } = req.body;
+      if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
+        return res.status(503).json({ success: false, message: 'Admin credentials are not configured.' });
+      }
+      const { email, password } = req.body || {};
 
-      if (!email || !password) {
+      if (typeof email !== 'string' || typeof password !== 'string' || !email || !password) {
         return res.status(400).json({
           success: false,
           message: 'Email and password are required',
@@ -31,8 +32,7 @@ export class AuthController {
       }
 
       // Generate a secure session token
-      const token = `sz_admin_${crypto.randomBytes(24).toString('hex')}`;
-      activeSessions.add(token);
+      const token = await Sessions.create();
 
       return res.status(200).json({
         success: true,
@@ -57,64 +57,76 @@ export class AuthController {
    * GET /api/auth/me
    * Check if current session token is valid
    */
-  static me(req: Request, res: Response) {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ success: false, authenticated: false });
-    }
+  static async me(req: Request, res: Response, next: NextFunction) {
+    try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ success: false, authenticated: false });
+      }
 
-    const token = authHeader.split('Bearer ')[1].trim();
-    if (!activeSessions.has(token)) {
-      return res.status(401).json({ success: false, authenticated: false });
-    }
+      const token = authHeader.split('Bearer ')[1].trim();
+      if (!await Sessions.has(token)) {
+        return res.status(401).json({ success: false, authenticated: false });
+      }
 
-    return res.status(200).json({
-      success: true,
-      authenticated: true,
-      user: {
-        email: ADMIN_EMAIL,
-        role: 'administrator',
-        name: 'Sports Zone Admin',
-      },
-    });
+      return res.status(200).json({
+        success: true,
+        authenticated: true,
+        user: {
+          email: ADMIN_EMAIL,
+          role: 'administrator',
+          name: 'Sports Zone Admin',
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
   }
 
   /**
    * POST /api/auth/logout
    * Terminate admin session
    */
-  static logout(req: Request, res: Response) {
-    const authHeader = req.headers.authorization;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.split('Bearer ')[1].trim();
-      activeSessions.delete(token);
+  static async logout(req: Request, res: Response, next: NextFunction) {
+    try {
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.split('Bearer ')[1].trim();
+        await Sessions.delete(token);
+      }
+      return res.status(200).json({
+        success: true,
+        message: 'Logged out successfully',
+      });
+    } catch (error) {
+      next(error);
     }
-    return res.status(200).json({
-      success: true,
-      message: 'Logged out successfully',
-    });
   }
 
   /**
    * Middleware to protect admin routes
    */
-  static requireAdmin(req: Request, res: Response, next: NextFunction) {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({
-        success: false,
-        message: 'Authentication required to access admin resources.',
-      });
-    }
+  static async requireAdmin(req: Request, res: Response, next: NextFunction) {
+    try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({
+          success: false,
+          message: 'Authentication required to access admin resources.',
+        });
+      }
 
-    const token = authHeader.split('Bearer ')[1].trim();
-    if (!activeSessions.has(token)) {
-      return res.status(401).json({
-        success: false,
-        message: 'Session expired or invalid. Please sign in again.',
-      });
-    }
+      const token = authHeader.split('Bearer ')[1].trim();
+      if (!await Sessions.has(token)) {
+        return res.status(401).json({
+          success: false,
+          message: 'Session expired or invalid. Please sign in again.',
+        });
+      }
 
-    next();
+      next();
+    } catch (error) {
+      next(error);
+    }
   }
 }

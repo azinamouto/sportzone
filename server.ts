@@ -1,25 +1,14 @@
 import express from 'express';
 import { createServer as createViteServer } from 'vite';
-import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import apiRouter from './server/routes/api.ts';
-
-dotenv.config();
+import app from './server/app.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const isProduction = process.env.NODE_ENV === 'production';
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 async function bootstrap() {
-  const app = express();
-
-  // JSON request body parser
-  app.use(express.json());
-
-  // Mount Laravel-style API endpoints
-  app.use('/api', apiRouter);
-
   if (!isProduction) {
     const vite = await createViteServer({
       server: { middlewareMode: true },

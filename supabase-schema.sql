@@ -22,29 +22,19 @@ create table if not exists public.booking_requests (
 -- Enable Row Level Security (RLS)
 alter table public.booking_requests enable row level security;
 
--- Policy: Allow anonymous users / customers to submit court booking requests
-create policy "Allow public submissions"
-  on public.booking_requests
-  for insert
-  with check (true);
+-- All access goes through the Express API using its server-only service role.
+-- Remove legacy policies that allowed public access to admin data.
+drop policy if exists "Allow public submissions" on public.booking_requests;
+drop policy if exists "Allow read access" on public.booking_requests;
+drop policy if exists "Allow update access" on public.booking_requests;
+drop policy if exists "Allow delete access" on public.booking_requests;
 
--- Policy: Allow read access for admin dashboard (or public if anon key is used)
-create policy "Allow read access"
-  on public.booking_requests
-  for select
-  using (true);
-
--- Policy: Allow update status for admin dashboard
-create policy "Allow update access"
-  on public.booking_requests
-  for update
-  using (true);
-
--- Policy: Allow delete for admin dashboard
-create policy "Allow delete access"
-  on public.booking_requests
-  for delete
-  using (true);
-
--- Realtime publication (optional, allows instant dashboard refreshes)
-alter publication supabase_realtime add table public.booking_requests;
+-- Shared sessions survive function restarts and work across Vercel instances.
+-- Store only token hashes; no public policies grant access to this table.
+create table if not exists public.admin_sessions (
+  token_hash text primary key,
+  expires_at timestamp with time zone not null
+);
+alter table public.admin_sessions enable row level security;
+create index if not exists admin_sessions_expires_at_idx
+  on public.admin_sessions (expires_at);

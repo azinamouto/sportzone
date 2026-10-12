@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import path from 'path';
@@ -9,9 +10,9 @@ const DATA_DIR = path.resolve(__dirname, '../../data');
 const DATA_FILE = path.join(DATA_DIR, 'booking_requests.json');
 
 const supabaseUrl = process.env.SUPABASE_URL || '';
-const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || '';
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || process.env.SUPABASE_ANON_KEY || '';
 
-let supabaseClient: SupabaseClient | null = null;
+export let supabaseClient: SupabaseClient | null = null;
 if (supabaseUrl && supabaseKey) {
   try {
     supabaseClient = createClient(supabaseUrl, supabaseKey);
@@ -23,6 +24,9 @@ if (supabaseUrl && supabaseKey) {
 
 // Ensure local persistence data file exists
 function ensureLocalStore(): BookingRequest[] {
+  if (process.env.VERCEL) {
+    throw new Error('Booking storage unavailable. Configure Supabase and run supabase-schema.sql.');
+  }
   try {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -93,6 +97,9 @@ function ensureLocalStore(): BookingRequest[] {
 }
 
 function writeLocalStore(items: BookingRequest[]) {
+  if (process.env.VERCEL) {
+    throw new Error('Local booking storage is not supported on Vercel.');
+  }
   try {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -147,10 +154,10 @@ export const StorageService = {
           .from('booking_requests')
           .select('*')
           .eq('id', id)
-          .single();
+          .maybeSingle();
 
-        if (!error && data) {
-          return data as BookingRequest;
+        if (!error) {
+          return data as BookingRequest | null;
         }
       } catch (err) {
         console.warn('[Sports Zone] Supabase getById error:', err);
@@ -193,6 +200,7 @@ export const StorageService = {
 
         if (!error && data) {
           // Also sync to local store for offline redundancy
+          if (process.env.VERCEL) return data as BookingRequest;
           const local = ensureLocalStore();
           writeLocalStore([data as BookingRequest, ...local]);
           return data as BookingRequest;
@@ -222,9 +230,11 @@ export const StorageService = {
           })
           .eq('id', id)
           .select()
-          .single();
+          .maybeSingle();
 
+        if (!error && !data) return null;
         if (!error && data) {
+          if (process.env.VERCEL) return data as BookingRequest;
           const local = ensureLocalStore();
           const idx = local.findIndex(item => item.id === id);
           if (idx !== -1) {
@@ -260,6 +270,7 @@ export const StorageService = {
           .eq('id', id);
 
         if (!error) {
+          if (process.env.VERCEL) return true;
           const local = ensureLocalStore();
           writeLocalStore(local.filter(item => item.id !== id));
           return true;

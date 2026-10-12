@@ -2,10 +2,27 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "type": "node",
+            "request": "launch",
+            "name": "Start Sports Zone + open dashboard",
+            "runtimeArgs": ["--import", "tsx"],
+            "program": "${workspaceFolder}/server.ts",
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "outputCapture": "std",
+            "skipFiles": ["<node_internals>/**"],
+            "serverReadyAction": {
+                "pattern": "Admin Dashboard: http://0\\.0\\.0\\.0:([0-9]+)/dashboard",
+                "uriFormat": "http://localhost:%s/dashboard",
+                "action": "openExternally"
+            }
+        },
+        {
             "type": "chrome",
             "request": "launch",
-            "name": "Open index.Html",
-            "file": "c:\\Users\\jorji\\Documents\\Website_SportZone\\index.Html"
+            "name": "Open Sports Zone Dashboard (run npm run dev first)",
+            "url": "http://localhost:3000/dashboard",
+            "webRoot": "${workspaceFolder}"
         }
     ]
 }
