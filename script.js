@@ -1,4 +1,5 @@
 import { createReceiptTracker } from './receipt.js';
+import { initHomepageMotion } from './homepage-motion.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -7,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const menu = document.getElementById('nav-menu');
   const dropdown = document.getElementById('contact-sport');
   const progress = document.querySelector('.scroll-progress');
-  const hero = document.querySelector('.hero');
+  initHomepageMotion();
   const sections = [...document.querySelectorAll('section[id]')];
   const navLinks = [...document.querySelectorAll('.nav-link')];
   const closeMenu = () => {
@@ -38,9 +39,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const y = window.scrollY;
     const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
     progress.style.transform = `scaleX(${maxScroll > 0 ? y / maxScroll : 0})`;
-    const offset = Math.min(y, hero.offsetHeight);
-    hero.style.setProperty('--parallax-y', motion.matches ? '0px' : `${offset * .22}px`);
-    hero.style.setProperty('--card-y', motion.matches ? '0px' : `${-offset * .055}px`);
     let current = 'home';
     sections.forEach(section => {
       if (section.getBoundingClientRect().top <= header.offsetHeight + 110) current = section.id;
@@ -60,33 +58,6 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('resize', scheduleScroll);
   motion.addEventListener('change', scheduleScroll);
   updateScroll();
-
-  if ('IntersectionObserver' in window && !motion.matches) {
-    const observer = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-          observer.unobserve(entry.target);
-        }
-      });
-    }, { threshold: .08 });
-    document.querySelectorAll('.section-heading, .feature-item, .sport-card, .location-grid, .gallery, .contact-layout').forEach(element => {
-      element.classList.add('reveal');
-      observer.observe(element);
-    });
-  }
-  document.querySelectorAll('.gallery-item, .sport-card, .feature-item').forEach(card => {
-    card.addEventListener('pointermove', event => {
-      if (motion.matches || event.pointerType !== 'mouse') return;
-      const rect = card.getBoundingClientRect();
-      card.style.setProperty('--mouse-x', `${event.clientX - rect.left}px`);
-      card.style.setProperty('--mouse-y', `${event.clientY - rect.top}px`);
-    });
-    card.addEventListener('pointerleave', () => {
-      card.style.removeProperty('--mouse-x');
-      card.style.removeProperty('--mouse-y');
-    });
-  });
 
   function chooseSport(sport) {
     dropdown.value = sport;
