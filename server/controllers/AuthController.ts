@@ -1,9 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { Sessions } from '../services/sessions.ts';
-
-const isHosted = process.env.NODE_ENV === 'production' || !!process.env.VERCEL;
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || (isHosted ? '' : 'admin@net');
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || (isHosted ? '' : 'admin123');
+import { AdminConfigurationError, getAdminAccounts, passwordMatches, publicAdmin, sessionAccount } from '../services/adminAccounts.ts';
 
 export class AuthController {
   /**
@@ -12,7 +9,8 @@ export class AuthController {
    */
   static async login(req: Request, res: Response) {
     try {
-      if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
+      const accounts = getAdminAccounts();
+      if (!accounts.length) {
         return res.status(503).json({ success: false, message: 'Admin credentials are not configured.' });
       }
       const { email, password } = req.body || {};
@@ -24,7 +22,8 @@ export class AuthController {
         });
       }
 
-      if (email.trim().toLowerCase() !== ADMIN_EMAIL.toLowerCase() || password !== ADMIN_PASSWORD) {
+      const account = accounts.find(item => item.email === email.trim().toLowerCase());
+      if (!account || !passwordMatches(password, account.password)) {
         return res.status(401).json({
           success: false,
           message: 'Invalid credentials. Please check your admin email and password.',
@@ -32,20 +31,29 @@ export class AuthController {
       }
 
       // Generate a secure session token
-      const token = await Sessions.create();
+      let token: string;
+      try {
+        token = await Sessions.create(account.email);
+      } catch {
+        // Do not log provider errors: they may include request or credential data.
+        console.error('[AuthController.login] Session storage unavailable.');
+        return res.status(503).json({
+          success: false,
+          message: 'Unable to create an admin session. Please try again later.',
+        });
+      }
 
       return res.status(200).json({
         success: true,
         message: 'Admin login successful',
         token,
-        user: {
-          email: ADMIN_EMAIL,
-          role: 'administrator',
-          name: 'Sports Zone Admin',
-        },
+        user: publicAdmin(account),
       });
     } catch (error) {
-      console.error('[AuthController.login] error:', error);
+      if (error instanceof AdminConfigurationError) {
+        return res.status(503).json({ success: false, message: 'Admin credentials are not configured correctly.' });
+      }
+      console.error('[AuthController.login] Unexpected login failure.');
       return res.status(500).json({
         success: false,
         message: 'Server error during login',
@@ -68,15 +76,13 @@ export class AuthController {
       if (!await Sessions.has(token)) {
         return res.status(401).json({ success: false, authenticated: false });
       }
+      const account = sessionAccount(token);
+      if (!account) return res.status(401).json({ success: false, authenticated: false });
 
       return res.status(200).json({
         success: true,
         authenticated: true,
-        user: {
-          email: ADMIN_EMAIL,
-          role: 'administrator',
-          name: 'Sports Zone Admin',
-        },
+        user: publicAdmin(account),
       });
     } catch (error) {
       next(error);
@@ -117,7 +123,7 @@ export class AuthController {
       }
 
       const token = authHeader.split('Bearer ')[1].trim();
-      if (!await Sessions.has(token)) {
+      if (!await Sessions.has(token) || !sessionAccount(token)) {
         return res.status(401).json({
           success: false,
           message: 'Session expired or invalid. Please sign in again.',

@@ -161,12 +161,14 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       const json = await res.json();
 
-      if (json.success && json.token) {
+      if (res.ok && json.success && json.token) {
         setToken(json.token);
         updateView(true, json.user);
         await Promise.all([loadStats(), loadRequests()]);
       } else {
-        loginError.textContent = json.message || 'Invalid email or password.';
+        loginError.textContent = json.message || (res.status === 401
+          ? 'Invalid email or password.'
+          : 'Authentication service unavailable. Please try again later.');
         loginError.style.display = 'block';
       }
     } catch {

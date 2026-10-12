@@ -1,12 +1,13 @@
 import crypto from 'node:crypto';
 import { supabaseClient } from './supabase.ts';
+import { accountTokenPrefix } from './adminAccounts.ts';
 
 const localSessions = new Map<string, number>();
 const tokenHash = (token: string) => crypto.createHash('sha256').update(token).digest('hex');
 
 export const Sessions = {
-  async create(): Promise<string> {
-    const token = `sz_admin_${crypto.randomBytes(32).toString('hex')}`;
+  async create(email: string): Promise<string> {
+    const token = `${accountTokenPrefix(email)}${crypto.randomBytes(32).toString('hex')}`;
     const expires = Date.now() + 8 * 60 * 60 * 1000;
     if (supabaseClient) {
       const { error } = await supabaseClient.from('admin_sessions').insert({

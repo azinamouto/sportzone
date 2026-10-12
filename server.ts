@@ -6,7 +6,7 @@ import app from './server/app.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const isProduction = process.env.NODE_ENV === 'production';
-const PORT = Number(process.env.PORT) || 3000;
+const PORT = Number(process.env.PORT) || 3006;
 
 async function bootstrap() {
   if (!isProduction) {

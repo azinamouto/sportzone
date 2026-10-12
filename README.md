@@ -23,8 +23,11 @@ with **File > Open Folder > C:\\Users\\admin\\Documents\\sportzone** rather than
 individual HTML files.
 
 Without Supabase, local development uses `data/booking_requests.json` and in-memory
-sessions. The local demo login is `admin@net` / `admin123`. Copy `.env.example` to
-`.env` to configure your own credentials or Supabase. `npm run preview` only previews
+sessions. Copy `.env.example` to `.env` and configure `ADMIN_EMAIL` together with
+`ADMIN_PASSWORD`, or configure `ADMIN_USERS`. There are no default credentials.
+Restart the server after changing `.env` and use the URL printed by that process;
+an older process on another port retains its previous credentials.
+`npm run preview` only previews
 the static build; use `npm run dev` for the full app.
 
 ## Deploy on Vercel
@@ -52,3 +55,15 @@ logout revokes them across instances. Expired session rows can be removed period
 with `delete from public.admin_sessions where expires_at < now();`.
 
 Validation: `npm run build`, `npm run lint`, and `npm test`.
+
+## Additional dashboard accounts
+
+Keep `ADMIN_EMAIL` and `ADMIN_PASSWORD` for the existing owner login. Add other
+accounts using the server-only `ADMIN_USERS` environment variable, a JSON array
+of objects with `email`, `password`, and an optional `name`. Every listed account
+has full administrator access. See `.env.example` for the format.
+
+For local use, set `ADMIN_USERS` in `.env` and restart the server. For Vercel,
+set the same variable in the deployment environment and redeploy. Never prefix
+it with `VITE_` or commit passwords. No database migration is needed. These are
+application logins, separate from Supabase Authentication users.
