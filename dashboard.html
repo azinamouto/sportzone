@@ -1,0 +1,1099 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sports Zone | Admin Court Dashboard</title>
+    <meta name="description" content="Sports Zone customer booking requests and court administration dashboard." />
+    <script type="module" src="/theme.js"></script>
+    <link rel="stylesheet" href="./style.css" />
+    <link rel="stylesheet" href="./theme.css" />
+    <style>
+      /* ==========================================================================
+         SportsZone SaaS Admin Dashboard Styles
+         Refined, compact, aligned, responsive
+         ========================================================================== */
+
+      :root {
+        --dash-radius: 12px;
+        --dash-border: var(--line, rgba(255, 255, 255, 0.09));
+        --dash-surface: var(--surface, #171923);
+        --dash-text: var(--text, #f1f2f8);
+        --dash-muted: var(--muted, #a8adbd);
+        --dash-accent: var(--purple, #b8a4f9);
+      }
+
+      /* Page Layout & Grid Container */
+      .dash-main {
+        padding-top: 1.75rem;
+        padding-bottom: 4rem;
+        min-height: calc(100vh - 120px);
+      }
+
+      /* Dashboard Header */
+      .dash-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        flex-wrap: wrap;
+        gap: 1.25rem;
+        margin-bottom: 1.5rem;
+      }
+      .dash-title-group h1 {
+        font-size: clamp(1.6rem, 2.5vw, 2.2rem);
+        margin: 0.2rem 0;
+        font-weight: 800;
+        letter-spacing: -0.025em;
+        line-height: 1.2;
+      }
+      .dash-header-actions {
+        display: flex;
+        gap: 0.65rem;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      /* Statistics Cards Grid - Equal Height & Proportional */
+      .dash-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+      .dash-stat-card {
+        background: var(--dash-surface);
+        border: 1px solid var(--dash-border);
+        border-radius: var(--dash-radius);
+        padding: 1.1rem 1.25rem;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 98px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+      }
+      .dash-stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2.5px;
+        background: var(--stat-accent, var(--dash-accent));
+        opacity: 0.9;
+      }
+      .dash-stat-label {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--dash-muted);
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+      }
+      .dash-stat-value {
+        font-size: 1.85rem;
+        font-weight: 800;
+        line-height: 1.1;
+        letter-spacing: -0.02em;
+        color: var(--dash-text);
+      }
+      .dash-stat-sub {
+        font-size: 0.74rem;
+        color: var(--dash-muted);
+        margin-top: 0.25rem;
+      }
+
+      /* Status Tabs - Segmented Pill Bar */
+      .dash-tabs-bar {
+        display: inline-flex;
+        gap: 0.35rem;
+        background: var(--dash-surface);
+        border: 1px solid var(--dash-border);
+        border-radius: 10px;
+        padding: 0.3rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+        max-width: 100%;
+      }
+      .dash-tab {
+        background: transparent;
+        border: 0;
+        color: var(--dash-muted);
+        padding: 0.45rem 0.9rem;
+        border-radius: 7px;
+        font-size: 0.82rem;
+        font-weight: 500;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        transition: all 0.15s ease;
+        user-select: none;
+      }
+      .dash-tab:hover {
+        color: var(--dash-text);
+        background: rgba(255, 255, 255, 0.04);
+      }
+      .dash-tab.active {
+        background: var(--dash-accent);
+        color: #14101e;
+        font-weight: 700;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+      }
+      .tab-badge {
+        font-size: 0.72rem;
+        padding: 0.1rem 0.45rem;
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.15);
+        font-weight: 700;
+      }
+      .dash-tab.active .tab-badge {
+        background: rgba(0, 0, 0, 0.2);
+        color: #14101e;
+      }
+
+      /* Toolbar: Search, Filters & Row Count */
+      .dash-toolbar {
+        background: var(--dash-surface);
+        border: 1px solid var(--dash-border);
+        border-radius: var(--dash-radius);
+        padding: 0.75rem 1rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.25rem;
+      }
+      .dash-toolbar-left {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.65rem;
+        align-items: center;
+        flex: 1;
+        min-width: 260px;
+      }
+      .dash-search-input {
+        flex: 1;
+        min-width: 220px;
+        max-width: 360px;
+        height: 36px;
+        background: var(--field, rgba(0, 0, 0, 0.2));
+        border: 1px solid var(--dash-border);
+        color: var(--dash-text);
+        padding: 0 0.85rem;
+        border-radius: 7px;
+        font-size: 0.84rem;
+        transition: border-color 0.15s ease;
+      }
+      .dash-search-input:focus {
+        border-color: var(--dash-accent);
+        outline: none;
+      }
+      .dash-select {
+        height: 36px;
+        background: var(--field, rgba(0, 0, 0, 0.2));
+        border: 1px solid var(--dash-border);
+        color: var(--dash-text);
+        padding: 0 0.75rem;
+        border-radius: 7px;
+        font-size: 0.84rem;
+        cursor: pointer;
+      }
+      .dash-select:focus {
+        border-color: var(--dash-accent);
+        outline: none;
+      }
+      .dash-count-label {
+        font-size: 0.8rem;
+        color: var(--dash-muted);
+        font-weight: 500;
+        white-space: nowrap;
+      }
+
+      /* Compact, Clean SaaS Data Table */
+      .dash-table-wrap {
+        background: var(--dash-surface);
+        border: 1px solid var(--dash-border);
+        border-radius: var(--dash-radius);
+        overflow-x: auto;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+      }
+      .dash-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+        font-size: 0.85rem;
+        line-height: 1.35;
+        min-width: 880px;
+      }
+      .dash-table th {
+        padding: 0.75rem 1rem;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--dash-muted);
+        border-bottom: 1px solid var(--dash-border);
+        background: rgba(255, 255, 255, 0.02);
+        white-space: nowrap;
+        cursor: pointer;
+        user-select: none;
+      }
+      .dash-table th:hover {
+        color: var(--dash-text);
+      }
+      .dash-table td {
+        padding: 0.65rem 1rem;
+        border-bottom: 1px solid var(--dash-border);
+        vertical-align: middle;
+      }
+      .dash-table tbody tr {
+        transition: background-color 0.12s ease;
+      }
+      .dash-table tbody tr:hover {
+        background: rgba(255, 255, 255, 0.025);
+      }
+      .dash-table tbody tr:last-child td {
+        border-bottom: 0;
+      }
+
+      /* Table Cell Typography & Compact Layouts */
+      .ref-id-tag {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: var(--dash-accent);
+        background: rgba(184, 164, 249, 0.1);
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        border: 1px solid rgba(184, 164, 249, 0.2);
+        display: inline-block;
+        white-space: nowrap;
+      }
+      .ref-sub-date {
+        font-size: 0.72rem;
+        color: var(--dash-muted);
+        margin-top: 0.2rem;
+        white-space: nowrap;
+      }
+
+      .customer-cell {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+      }
+      .customer-avatar {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, rgba(184, 164, 249, 0.3), rgba(184, 164, 249, 0.15));
+        border: 1px solid rgba(184, 164, 249, 0.3);
+        color: var(--dash-accent);
+        font-weight: 700;
+        font-size: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .customer-info {
+        min-width: 0;
+      }
+      .customer-name {
+        font-weight: 600;
+        color: var(--dash-text);
+        font-size: 0.88rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 170px;
+      }
+      .customer-sub {
+        font-size: 0.74rem;
+        color: var(--dash-muted);
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin-top: 0.1rem;
+      }
+      .customer-sub a {
+        color: inherit;
+        text-decoration: none;
+        transition: color 0.12s;
+      }
+      .customer-sub a:hover {
+        color: var(--dash-accent);
+      }
+
+      .badge-sport {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        font-size: 0.78rem;
+        font-weight: 600;
+        padding: 0.25rem 0.55rem;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--dash-text);
+        border: 1px solid var(--dash-border);
+        white-space: nowrap;
+      }
+
+      .schedule-main {
+        font-weight: 600;
+        color: var(--dash-text);
+        font-size: 0.84rem;
+        white-space: nowrap;
+      }
+      .schedule-sub {
+        font-size: 0.73rem;
+        color: var(--dash-muted);
+        margin-top: 0.15rem;
+        white-space: nowrap;
+      }
+
+      .fee-amount {
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: var(--dash-text);
+        white-space: nowrap;
+      }
+      .fee-sub {
+        font-size: 0.7rem;
+        color: var(--dash-muted);
+      }
+
+      /* Status Pill Badges */
+      .badge-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        padding: 0.22rem 0.6rem;
+        border-radius: 999px;
+        white-space: nowrap;
+      }
+      .badge-status::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+      .badge-pending {
+        background: rgba(245, 158, 11, 0.12);
+        color: #f59e0b;
+        border: 1px solid rgba(245, 158, 11, 0.25);
+      }
+      .badge-confirmed {
+        background: rgba(16, 185, 129, 0.12);
+        color: #10b981;
+        border: 1px solid rgba(16, 185, 129, 0.25);
+      }
+      .badge-rejected {
+        background: rgba(239, 68, 68, 0.12);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.25);
+      }
+      .badge-completed {
+        background: rgba(148, 163, 184, 0.12);
+        color: #94a3b8;
+        border: 1px solid rgba(148, 163, 184, 0.25);
+      }
+
+      /* Court & Notes Column */
+      .court-tag {
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #10b981;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        white-space: nowrap;
+      }
+      .court-empty {
+        font-size: 0.75rem;
+        color: var(--dash-muted);
+        font-style: italic;
+      }
+      .note-preview-line {
+        font-size: 0.74rem;
+        color: var(--dash-muted);
+        margin-top: 0.15rem;
+        max-width: 170px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* Compact Actions Column */
+      .actions-cell-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.35rem;
+      }
+      .btn-action-view {
+        height: 28px;
+        padding: 0 0.65rem;
+        font-size: 0.76rem;
+        font-weight: 600;
+        border-radius: 6px;
+        cursor: pointer;
+        border: 1px solid var(--dash-border);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--dash-text);
+        transition: all 0.15s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        white-space: nowrap;
+      }
+      .btn-action-view:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: var(--dash-accent);
+      }
+      .btn-action-menu-trigger {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        cursor: pointer;
+        border: 1px solid var(--dash-border);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--dash-muted);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s ease;
+      }
+      .btn-action-menu-trigger:hover,
+      .btn-action-menu-trigger.active {
+        color: var(--dash-text);
+        background: rgba(255, 255, 255, 0.1);
+        border-color: var(--dash-accent);
+      }
+
+      /* Unclipped Floating Action Dropdown Menu (Fixed Position) */
+      .floating-action-menu {
+        position: fixed;
+        z-index: 99999;
+        min-width: 180px;
+        background: var(--dash-surface);
+        border: 1px solid var(--dash-border);
+        border-radius: 8px;
+        padding: 0.35rem;
+        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+        backdrop-filter: blur(12px);
+        display: none;
+        flex-direction: column;
+        gap: 0.15rem;
+      }
+      .floating-action-menu.open {
+        display: flex;
+      }
+      .floating-menu-item {
+        border: 0;
+        background: transparent;
+        padding: 0.45rem 0.65rem;
+        border-radius: 5px;
+        font-size: 0.78rem;
+        font-weight: 500;
+        color: var(--dash-text);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-align: left;
+        width: 100%;
+        transition: background 0.12s ease;
+      }
+      .floating-menu-item:hover {
+        background: rgba(255, 255, 255, 0.06);
+      }
+      .floating-menu-item.danger {
+        color: #ef4444;
+      }
+      .floating-menu-item.danger:hover {
+        background: rgba(239, 68, 68, 0.1);
+      }
+      .floating-menu-divider {
+        height: 1px;
+        background: var(--dash-border);
+        margin: 0.25rem 0;
+      }
+
+      /* Table Footer */
+      .dash-table-footer {
+        padding: 0.75rem 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 0.76rem;
+        color: var(--dash-muted);
+        border-top: 1px solid var(--dash-border);
+        background: rgba(255, 255, 255, 0.01);
+      }
+
+      /* Mobile Stacked Request Cards (<= 768px) */
+      .dash-cards-wrap {
+        display: none;
+        flex-direction: column;
+        gap: 0.85rem;
+      }
+      .mobile-req-card {
+        background: var(--dash-surface);
+        border: 1px solid var(--dash-border);
+        border-radius: var(--dash-radius);
+        padding: 1rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+      .mobile-card-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+      }
+      .mobile-card-customer {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        margin-bottom: 0.75rem;
+      }
+      .mobile-card-details-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--dash-border);
+        border-radius: 8px;
+        padding: 0.65rem;
+        margin-bottom: 0.75rem;
+        font-size: 0.78rem;
+      }
+      .mobile-card-actions {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+        align-items: center;
+        padding-top: 0.5rem;
+        border-top: 1px solid var(--dash-border);
+      }
+      .mobile-card-actions .btn-sm {
+        min-height: 38px;
+        padding: 0 1rem;
+        font-size: 0.82rem;
+      }
+
+      /* Modals */
+      .dash-modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.75);
+        backdrop-filter: blur(6px);
+        z-index: 10000;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+      }
+      .dash-modal.open {
+        display: flex;
+      }
+      .dash-modal-card {
+        background: var(--dash-surface);
+        border: 1px solid var(--dash-border);
+        border-radius: 16px;
+        width: 100%;
+        max-width: 520px;
+        padding: 1.5rem;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
+      }
+
+      /* Login Screen */
+      .login-screen-wrap {
+        min-height: 75vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1rem;
+      }
+      .login-card {
+        background: var(--dash-surface);
+        border: 1px solid var(--dash-border);
+        border-radius: 18px;
+        padding: 2.25rem 2rem;
+        width: 100%;
+        max-width: 420px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+      }
+      .login-error-alert {
+        background: rgba(239, 68, 68, 0.12);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: #f87171;
+        padding: 0.65rem 0.85rem;
+        border-radius: 8px;
+        font-size: 0.82rem;
+        margin-bottom: 1.25rem;
+        display: none;
+      }
+      .user-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.75rem;
+        padding: 0.25rem 0.65rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid var(--dash-border);
+        font-weight: 500;
+      }
+      .storage-status-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.74rem;
+        padding: 0.22rem 0.6rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid var(--dash-border);
+      }
+      .storage-status-tag.active {
+        border-color: rgba(16, 185, 129, 0.4);
+        color: #10b981;
+      }
+
+      /* Responsive Layout Rules */
+      @media (max-width: 1024px) {
+        .dash-stats-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+
+      @media (max-width: 768px) {
+        .dash-table-wrap {
+          display: none;
+        }
+        .dash-cards-wrap {
+          display: flex;
+        }
+        .dash-stats-grid {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 0.75rem;
+        }
+        .dash-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 1rem;
+        }
+        .dash-header-actions {
+          width: 100%;
+          justify-content: flex-start;
+        }
+        .dash-toolbar {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .dash-toolbar-left {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .dash-search-input,
+        .dash-select {
+          max-width: 100%;
+          width: 100%;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .dash-stats-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Header with identical Sports Zone branding -->
+    <header id="header">
+      <nav id="navbar" aria-label="Main Navigation">
+        <a href="/" class="logo-link">
+          <div class="logo-group">
+            <span class="logo-text" id="logo"><span class="brand-mark" aria-hidden="true">/</span> SPORTS<span>ZONE</span></span>
+          </div>
+        </a>
+
+        <ul class="nav-menu" id="nav-menu">
+          <li><a href="/" class="nav-link">← Back to Site</a></li>
+          <li class="auth-only-nav" style="display: none;"><a href="#inquiries-section" class="nav-link active">Inquiries</a></li>
+          <li class="auth-only-nav nav-cta-item" style="display: none;">
+            <button id="open-new-modal-nav" class="nav-cta-btn" type="button">+ Log Request</button>
+          </li>
+          <li class="auth-only-nav" style="display: none;">
+            <div class="user-pill" id="nav-user-label">
+              <span>👤</span> admin@net
+            </div>
+          </li>
+          <li class="auth-only-nav" style="display: none;">
+            <button id="logout-btn" class="btn-xs" style="padding: 0.4rem 0.75rem;" type="button">Log Out</button>
+          </li>
+        </ul>
+
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to light mode" title="Switch to light mode">
+          <svg class="theme-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg>
+          <svg class="theme-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 13A8.5 8.5 0 0 1 11 3.5 8.5 8.5 0 1 0 20.5 13Z"/></svg>
+        </button>
+      </nav>
+    </header>
+
+    <!-- SECTION 1: Minimal Admin Login (Shown when not authenticated) -->
+    <div id="login-view" class="login-screen-wrap container">
+      <div class="login-card">
+        <div style="text-align: center; margin-bottom: 1.5rem;">
+          <div class="eyebrow" style="margin-bottom: 0.4rem;"><span class="status-dot"></span> SECURE ADMIN ACCESS</div>
+          <h2 style="font-size: 1.5rem; margin: 0 0 0.4rem; font-weight: 800; letter-spacing: -0.02em;">Sports Zone <em>Portal</em></h2>
+          <p style="font-size: 0.82rem; color: var(--dash-muted); margin: 0;">Sign in to view customer court requests and management controls.</p>
+        </div>
+
+        <div id="login-error" class="login-error-alert" role="alert"></div>
+
+        <form id="login-form">
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <label for="login-email" class="form-label" style="font-size: 0.8rem;">Admin Email</label>
+            <input
+              type="text"
+              id="login-email"
+              name="email"
+              class="form-input"
+              value="admin@net"
+              required
+              autocomplete="username"
+              placeholder="admin@net"
+            />
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1.25rem;">
+            <label for="login-password" class="form-label" style="font-size: 0.8rem;">Password</label>
+            <input
+              type="password"
+              id="login-password"
+              name="password"
+              class="form-input"
+              required
+              autocomplete="current-password"
+              placeholder="••••••••"
+            />
+          </div>
+
+          <button type="submit" id="login-submit-btn" class="btn btn-submit" style="width: 100%; min-height: 44px;">
+            Access Dashboard ↗
+          </button>
+
+          <div style="margin-top: 1.15rem; padding-top: 1.15rem; border-top: 1px solid var(--dash-border); font-size: 0.76rem; color: var(--dash-muted); text-align: center; line-height: 1.5;">
+            Authorized staff only.<br />
+            Account: <strong style="color: var(--dash-text);">admin@net</strong> · Password: <strong style="color: var(--dash-text);">admin123</strong>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- SECTION 2: Admin Dashboard View (Shown once logged in) -->
+    <main class="dash-main container" id="dashboard-view" style="display: none;">
+      <!-- Title & Live Status -->
+      <div class="dash-header">
+        <div class="dash-title-group">
+          <div class="eyebrow"><span class="status-dot"></span> ADMIN & COURT OPERATIONS · TALIBON, BOHOL</div>
+          <h1>Court Requests <em>Dashboard</em></h1>
+          <p class="section-subtitle" style="margin: 0; font-size: 0.85rem;">Review, confirm, and assign courts for customer booking inquiries.</p>
+        </div>
+        <div class="dash-header-actions">
+          <span id="storage-status-badge" class="storage-status-tag">
+            <span class="status-dot" style="background:#10b981;"></span> Checking backend storage...
+          </span>
+          <button id="refresh-btn" class="btn btn-secondary btn-sm" style="min-height: 36px; padding: 0 0.85rem;" type="button">↻ Refresh</button>
+          <button id="open-new-modal-btn" class="btn btn-sm" style="min-height: 36px; padding: 0 0.95rem;" type="button">+ New Request</button>
+        </div>
+      </div>
+
+      <!-- KPI Overview Cards -->
+      <div class="dash-stats-grid">
+        <div class="dash-stat-card" style="--stat-accent: #3b82f6;">
+          <div class="dash-stat-label">Total Inquiries</div>
+          <div class="dash-stat-value" id="stat-total">0</div>
+          <div class="dash-stat-sub">All customer requests recorded</div>
+        </div>
+        <div class="dash-stat-card" style="--stat-accent: #f59e0b;">
+          <div class="dash-stat-label">Pending Review</div>
+          <div class="dash-stat-value" id="stat-pending" style="color: #f59e0b;">0</div>
+          <div class="dash-stat-sub">Awaiting confirmation or reply</div>
+        </div>
+        <div class="dash-stat-card" style="--stat-accent: #10b981;">
+          <div class="dash-stat-label">Confirmed Courts</div>
+          <div class="dash-stat-value" id="stat-confirmed" style="color: #10b981;">0</div>
+          <div class="dash-stat-sub">Slot allocated & approved</div>
+        </div>
+        <div class="dash-stat-card" style="--stat-accent: #8b5cf6;">
+          <div class="dash-stat-label">Today's Sessions</div>
+          <div class="dash-stat-value" id="stat-today">0</div>
+          <div class="dash-stat-sub">Games scheduled for today</div>
+        </div>
+      </div>
+
+      <!-- Segmented Status Tabs for instant filtering -->
+      <div class="dash-tabs-bar" id="status-tabs">
+        <button class="dash-tab active" data-tab="all" type="button">
+          All Requests <span class="tab-badge" id="tab-count-all">0</span>
+        </button>
+        <button class="dash-tab" data-tab="pending" type="button">
+          Pending <span class="tab-badge" id="tab-count-pending">0</span>
+        </button>
+        <button class="dash-tab" data-tab="confirmed" type="button">
+          Confirmed <span class="tab-badge" id="tab-count-confirmed">0</span>
+        </button>
+        <button class="dash-tab" data-tab="completed" type="button">
+          Completed <span class="tab-badge" id="tab-count-completed">0</span>
+        </button>
+        <button class="dash-tab" data-tab="rejected" type="button">
+          Declined <span class="tab-badge" id="tab-count-rejected">0</span>
+        </button>
+      </div>
+
+      <!-- Toolbar: Search & Sports Filter -->
+      <div class="dash-toolbar">
+        <div class="dash-toolbar-left">
+          <input
+            type="search"
+            id="search-input"
+            class="dash-search-input"
+            placeholder="Search customer, phone, sport, or ID..."
+          />
+          <select id="filter-sport" class="dash-select">
+            <option value="all">All Sports & Facilities</option>
+            <option value="Basketball">🏀 Basketball Court</option>
+            <option value="Badminton">🏸 Badminton Court</option>
+            <option value="Volleyball">🏐 Volleyball Arena</option>
+            <option value="Pickleball">🏓 Pickleball Court</option>
+            <option value="General Inquiry">⚡ General Facility</option>
+          </select>
+          <select id="sort-select" class="dash-select">
+            <option value="newest">Sort: Newest First</option>
+            <option value="oldest">Sort: Oldest First</option>
+            <option value="name">Sort: Customer Name</option>
+            <option value="sport">Sort: Sport</option>
+          </select>
+        </div>
+        <div class="dash-count-label" id="table-count-label">
+          Showing 0 requests
+        </div>
+      </div>
+
+      <!-- Desktop & Tablet Data Table -->
+      <div class="dash-table-wrap">
+        <table class="dash-table">
+          <thead>
+            <tr>
+              <th data-sort="id" style="width: 120px;">Ref ID</th>
+              <th data-sort="name">Customer</th>
+              <th data-sort="sport" style="width: 120px;">Sport</th>
+              <th data-sort="schedule" style="width: 145px;">Schedule</th>
+              <th data-sort="price" style="width: 95px;">Est. Fee</th>
+              <th data-sort="status" style="width: 110px;">Status</th>
+              <th style="min-width: 150px;">Court & Notes</th>
+              <th style="width: 90px; text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="requests-tbody">
+            <tr>
+              <td colspan="8" style="text-align: center; padding: 2.5rem; color: var(--dash-muted);">
+                Loading requests from backend...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="dash-table-footer">
+          <span id="footer-summary-text">Showing 0 of 0 inquiries</span>
+          <span>Sports Zone Talibon · Admin Portal</span>
+        </div>
+      </div>
+
+      <!-- Mobile Stacked Cards Container (<= 768px) -->
+      <div class="dash-cards-wrap" id="requests-cards">
+        <!-- Rendered dynamically on mobile screens -->
+      </div>
+    </main>
+
+    <!-- Global Floating Action Menu (Positioned Fixed to avoid overflow clipping) -->
+    <div id="floating-menu" class="floating-action-menu">
+      <button type="button" class="floating-menu-item" id="menu-opt-confirm">
+        <span style="color: #10b981;">✓</span> Confirm Booking
+      </button>
+      <button type="button" class="floating-menu-item" id="menu-opt-assign">
+        <span>⚙</span> Assign Court & Notes
+      </button>
+      <button type="button" class="floating-menu-item" id="menu-opt-complete">
+        <span style="color: #94a3b8;">✓</span> Mark Completed
+      </button>
+      <div class="floating-menu-divider"></div>
+      <button type="button" class="floating-menu-item danger" id="menu-opt-reject">
+        <span>✕</span> Decline Request
+      </button>
+      <button type="button" class="floating-menu-item danger" id="menu-opt-delete">
+        <span>🗑</span> Delete Record
+      </button>
+    </div>
+
+    <!-- Modal 1: Full Detail View Modal -->
+    <div class="dash-modal" id="detail-modal">
+      <div class="dash-modal-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.15rem; border-bottom: 1px solid var(--dash-border); padding-bottom: 0.65rem;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span class="ref-id-tag" id="detail-ref-id">SZ-000</span>
+            <span id="detail-status-badge" class="badge-status badge-pending">PENDING</span>
+          </div>
+          <button id="close-detail-modal" class="btn-action-view" type="button" style="height: 26px; padding: 0 0.5rem;">✕</button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 1rem;">
+          <div>
+            <div class="dash-stat-label">Customer</div>
+            <div style="font-weight: 700; font-size: 1rem; color: var(--dash-text);" id="detail-name">-</div>
+            <div style="font-size: 0.82rem; color: var(--dash-muted); margin-top: 0.15rem;" id="detail-phone">-</div>
+            <div style="font-size: 0.78rem; color: var(--dash-muted);" id="detail-email">-</div>
+          </div>
+          <div>
+            <div class="dash-stat-label">Sport & Facility</div>
+            <div style="font-weight: 700; font-size: 1rem; color: var(--dash-text);" id="detail-sport">-</div>
+            <div style="font-size: 0.82rem; color: var(--dash-muted); margin-top: 0.15rem;" id="detail-schedule">-</div>
+            <div style="font-size: 0.82rem; color: #10b981; font-weight: 600;" id="detail-price">-</div>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 0.85rem; background: rgba(255,255,255,0.02); padding: 0.75rem; border-radius: 8px; border: 1px solid var(--dash-border);">
+          <div class="dash-stat-label" style="margin-bottom: 0.2rem;">Customer Inquiry Message</div>
+          <p style="margin: 0; font-size: 0.84rem; line-height: 1.45; color: var(--dash-text);" id="detail-message">-</p>
+        </div>
+
+        <div style="margin-bottom: 1.15rem; background: rgba(255,255,255,0.02); padding: 0.75rem; border-radius: 8px; border: 1px solid var(--dash-border);">
+          <div class="dash-stat-label" style="margin-bottom: 0.2rem;">Assigned Court & Admin Notes</div>
+          <div style="font-size: 0.84rem; font-weight: 600; color: #10b981;" id="detail-court">Court: Not assigned</div>
+          <div style="font-size: 0.78rem; color: var(--dash-muted); margin-top: 0.2rem;" id="detail-notes">Notes: None</div>
+        </div>
+
+        <div style="display: flex; gap: 0.45rem; justify-content: flex-end; flex-wrap: wrap;">
+          <button type="button" id="detail-btn-confirm" class="btn btn-sm" style="min-height: 36px; padding: 0 0.85rem; background:#10b981; color: white;">Confirm Booking</button>
+          <button type="button" id="detail-btn-assign" class="btn btn-secondary btn-sm" style="min-height: 36px; padding: 0 0.85rem;">Assign Court</button>
+          <button type="button" id="detail-btn-complete" class="btn btn-secondary btn-sm" style="min-height: 36px; padding: 0 0.85rem;">Mark Complete</button>
+          <button type="button" id="detail-btn-reject" class="btn btn-secondary btn-sm" style="min-height: 36px; padding: 0 0.85rem; color:#ef4444;">Decline</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 2: Quick Add / Manual Request -->
+    <div class="dash-modal" id="new-request-modal">
+      <div class="dash-modal-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.15rem;">
+          <h3 style="margin: 0; font-size: 1.15rem;">Log Customer Request</h3>
+          <button id="close-new-modal" class="btn-action-view" type="button" style="height: 26px; padding: 0 0.5rem;">✕</button>
+        </div>
+        <form id="dash-new-form">
+          <div class="form-group" style="margin-bottom: 0.85rem;">
+            <label class="form-label" style="font-size: 0.8rem;">Customer Name <span class="required">*</span></label>
+            <input type="text" name="name" class="form-input" required placeholder="e.g. Maria Santos" />
+          </div>
+          <div class="form-row" style="margin-bottom: 0.85rem;">
+            <div class="form-group">
+              <label class="form-label" style="font-size: 0.8rem;">Mobile Number <span class="required">*</span></label>
+              <input type="tel" name="phone" class="form-input" required placeholder="0917 123 4567" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="font-size: 0.8rem;">Email (Optional)</label>
+              <input type="email" name="email" class="form-input" placeholder="maria@gmail.com" />
+            </div>
+          </div>
+          <div class="form-row" style="margin-bottom: 0.85rem;">
+            <div class="form-group">
+              <label class="form-label" style="font-size: 0.8rem;">Sport / Facility <span class="required">*</span></label>
+              <select name="sport" class="form-input" required>
+                <option value="Basketball">Basketball Court</option>
+                <option value="Badminton">Badminton Court</option>
+                <option value="Volleyball">Volleyball Court</option>
+                <option value="Pickleball">Pickleball Court</option>
+                <option value="General Inquiry">General Inquiry</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="font-size: 0.8rem;">Preferred Date</label>
+              <input type="date" name="date" class="form-input" />
+            </div>
+          </div>
+          <div class="form-row" style="margin-bottom: 0.85rem;">
+            <div class="form-group">
+              <label class="form-label" style="font-size: 0.8rem;">Preferred Time</label>
+              <input type="time" name="time" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="font-size: 0.8rem;">Duration</label>
+              <select name="duration" class="form-input">
+                <option value="1">1 hour</option>
+                <option value="1.5">1.5 hours</option>
+                <option value="2">2 hours</option>
+                <option value="3">3 hours</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom: 1.15rem;">
+            <label class="form-label" style="font-size: 0.8rem;">Customer Message or Notes</label>
+            <textarea name="message" class="form-textarea" rows="2" placeholder="Group size, ball rental, etc."></textarea>
+          </div>
+          <div style="display: flex; gap: 0.65rem; justify-content: flex-end;">
+            <button type="button" id="cancel-new-modal" class="btn btn-secondary btn-sm" style="min-height: 36px;">Cancel</button>
+            <button type="submit" class="btn btn-sm" style="min-height: 36px;">Save Request</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal 3: Court Assignment & Admin Notes -->
+    <div class="dash-modal" id="assign-modal">
+      <div class="dash-modal-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.15rem;">
+          <h3 style="margin: 0; font-size: 1.15rem;" id="assign-modal-title">Manage Court Slot</h3>
+          <button id="close-assign-modal" class="btn-action-view" type="button" style="height: 26px; padding: 0 0.5rem;">✕</button>
+        </div>
+        <form id="dash-assign-form">
+          <input type="hidden" id="assign-req-id" name="id" />
+          <div class="form-group" style="margin-bottom: 0.85rem;">
+            <label class="form-label" style="font-size: 0.8rem;">Update Status</label>
+            <select id="assign-status" name="status" class="form-input">
+              <option value="pending">Pending Review</option>
+              <option value="confirmed">Confirmed / Approved</option>
+              <option value="completed">Completed Session</option>
+              <option value="rejected">Declined</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom: 0.85rem;">
+            <label class="form-label" style="font-size: 0.8rem;">Court Assigned</label>
+            <input type="text" id="assign-court" name="court_assigned" class="form-input" placeholder="e.g. Court 1 / Badminton Hall B" />
+          </div>
+          <div class="form-group" style="margin-bottom: 1.15rem;">
+            <label class="form-label" style="font-size: 0.8rem;">Internal Admin Notes</label>
+            <textarea id="assign-notes" name="admin_notes" class="form-textarea" rows="3" placeholder="Payment received, rackets provided, etc."></textarea>
+          </div>
+          <div style="display: flex; gap: 0.65rem; justify-content: flex-end;">
+            <button type="button" id="cancel-assign-modal" class="btn btn-secondary btn-sm" style="min-height: 36px;">Cancel</button>
+            <button type="submit" class="btn btn-sm" style="min-height: 36px;">Update Request</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Dashboard script -->
+    <script type="module" src="/dashboard.js"></script>
+  </body>
+</html>

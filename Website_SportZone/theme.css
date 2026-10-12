@@ -1,0 +1,8 @@
+﻿/* Light mode uses the same geometry and a pearl glass palette. */
+:root[data-theme="light"]{color-scheme:light;--bg:#f3f4f8;--text:#242530;--muted:#656777;--purple:#7054ab;--line:#28273a19;--surface:#fff;--glass:linear-gradient(135deg,#ffffffc9,#ffffff59);--field:#ffffff80;--header:#f7f8fbe8;--shadow:0 20px 60px #30304b08}
+[data-theme="light"] .theme-sun{display:none}[data-theme="light"] .theme-moon{display:block}
+[data-theme="light"] .hero:before{background:linear-gradient(90deg,#f3f4f8 0%,#f3f4f8c9 50%,#f3f4f855),linear-gradient(0deg,#f3f4f8,transparent 70%)}
+[data-theme="light"] .hero-photo{opacity:.35}[data-theme="light"] .hero h1 em{color:#8064b6}
+[data-theme="light"] .glass{background:linear-gradient(135deg,#ffffffb3,#ffffff55);border-color:#ffffffd9;box-shadow:inset 0 1px #fff,0 30px 80px #39305515}
+[data-theme="light"] .court-diagram,[data-theme="light"] .court-diagram>span,[data-theme="light"] .court-diagram:before,[data-theme="light"] .court-diagram:after{border-color:#7054ab80}
+[data-theme="light"] .court-diagram{background:linear-gradient(90deg,transparent 49.7%,#7054ab80 50%,transparent 50.3%)}

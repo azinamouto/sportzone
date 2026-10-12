@@ -1,0 +1,6 @@
+{
+  "name": "Sports Zone",
+  "description": "Sports Zone athletic and recreation facility located in Purok 2, San Francisco, Talibon, Bohol. Basketball, badminton, volleyball, and pickleball court rentals, fitness, and community sports.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

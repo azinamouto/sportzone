@@ -1,0 +1,11 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "Open index.Html",
+            "file": "c:\\Users\\jorji\\Documents\\Website_SportZone\\index.Html"
+        }
+    ]
+}
