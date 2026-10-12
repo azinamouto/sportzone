@@ -446,19 +446,28 @@
               </div>
 
               <button type="submit" id="submit-btn" class="btn btn-submit">
-                Prepare Booking Inquiry ↗
+                Send inquiry ↗
               </button>
 
-              <p class="form-note">Prepare your inquiry here, then send it by email. Court availability is confirmed by our team.</p>
+              <p class="form-note">Track your request after sending. Your court is reserved only when confirmed.</p>
               <!-- Dynamic Interactive Feedback Container -->
               <div id="form-feedback" class="form-feedback" aria-live="polite"></div>
             </form>
 
-            <!-- Recent Inquiries Section stored in browser -->
-            <div id="recent-inquiries-container" class="recent-inquiries-container" style="display: none;">
+            <div id="inquiry-receipt" class="inquiry-receipt" role="region" aria-labelledby="receipt-heading" tabindex="-1" hidden>
+              <h3 id="receipt-heading">Inquiry receipt</h3>
+              <div id="receipt-content"></div>
+              <div class="receipt-actions">
+                <button type="button" id="receipt-copy" class="btn">Copy tracking link</button>
+                <button type="button" id="receipt-refresh" class="btn-text-clear">Refresh</button>
+              </div>
+              <p class="receipt-hint">Updates every 15 seconds while this page is open. Save your private link to check later.</p>
+              <div id="receipt-notice" class="receipt-notice" role="status" aria-live="polite" aria-atomic="true"></div>
+            </div>
+            <div id="recent-inquiries-container" class="recent-inquiries-container" hidden>
               <div class="recent-header">
-                <h5>Your Recent Drafts</h5>
-                <button id="clear-inquiries-btn" class="btn-text-clear" type="button">Clear</button>
+                <h4>Recent inquiries</h4>
+                <button id="clear-inquiries-btn" class="btn-text-clear" type="button">Clear history</button>
               </div>
               <div id="recent-inquiries-list" class="recent-inquiries-list"></div>
             </div>

@@ -1,3 +1,5 @@
+import { createReceiptTracker } from './receipt.js';
+
 document.addEventListener('DOMContentLoaded', () => {
   const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const header = document.getElementById('header');
@@ -131,97 +133,43 @@ document.addEventListener('DOMContentLoaded', () => {
     if (selectedCard) chooseSport(selectedCard.dataset.sport);
   });
 
-  // The static site prepares an email; it never claims a reservation was sent.
   const form = document.getElementById('contact-form');
   const feedback = document.getElementById('form-feedback');
-  const historyPanel = document.getElementById('recent-inquiries-container');
-  const historyList = document.getElementById('recent-inquiries-list');
+  const tracker = createReceiptTracker();
   const dateInput = document.getElementById('contact-date');
   const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
   dateInput.min = ['year', 'month', 'day'].map(type => today.find(part => part.type === type).value).join('-');
-  const storageKey = 'sportszone_drafts';
-  let drafts = [];
-  try {
-    const saved = JSON.parse(localStorage.getItem(storageKey) || '[]');
-    if (Array.isArray(saved)) drafts = saved.filter(item => item && typeof item.sport === 'string' && typeof item.date === 'string').slice(0, 4);
-  } catch { /* The form also works when browser storage is unavailable. */ }
-  function renderDrafts() {
-    historyList.replaceChildren();
-    historyPanel.style.display = drafts.length ? 'block' : 'none';
-    drafts.forEach(draft => {
-      const row = document.createElement('div');
-      row.className = 'inquiry-item';
-      const sport = document.createElement('span');
-      sport.className = 'inquiry-sport';
-      sport.textContent = draft.sport;
-      const date = document.createElement('span');
-      date.className = 'inquiry-date';
-      date.textContent = `Draft · ${draft.date}`;
-      row.append(sport, date);
-      historyList.append(row);
-    });
-  }
   form.addEventListener('submit', async event => {
     event.preventDefault();
     if (!form.reportValidity()) return;
     const values = Object.fromEntries(new FormData(form));
     const submitBtn = form.querySelector('button[type="submit"]');
-    const originalText = submitBtn ? submitBtn.textContent : '';
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Sending to Admin...';
-    }
-
+    if (submitBtn.disabled) return;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending…';
     feedback.replaceChildren();
-    let requestId = '';
-
     try {
-      const res = await fetch('/api/requests', {
+      const response = await fetch('/api/requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(values),
+        signal: AbortSignal.timeout(20000),
       });
-      const json = await res.json();
-      if (json.success && json.data) {
-        requestId = json.data.id;
+      const result = await response.json();
+      if (!response.ok || !result.success || !result.data || !result.tracking_token) {
+        throw new Error('Submission failed');
       }
-    } catch (err) {
-      console.warn('Backend submission warning:', err);
+      tracker.add(result.data, result.tracking_token);
+      form.reset();
+      updateSession();
+    } catch {
+      feedback.textContent = 'Unable to confirm submission. Please contact us before trying again.';
+      feedback.className = 'form-feedback';
     } finally {
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.textContent = originalText;
-      }
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Send inquiry ↗';
     }
-
-    const subject = `Sports Zone inquiry — ${values.sport}${requestId ? ` [${requestId}]` : ''}`;
-    const body = `Booking Ref: ${requestId || 'Online Submission'}\nName: ${values.name.trim()}\nPhone: ${values.phone.trim()}\nEmail: ${values.email.trim()}\nSport: ${values.sport}\nPreferred date: ${values.date || 'Flexible'}\nPreferred time: ${values.time || 'Flexible'}\nDuration: ${values.duration} hour(s)\n\n${values.message.trim()}`;
-
-    const title = document.createElement('strong');
-    title.textContent = requestId ? `✓ Request sent to Admin! Ref: ${requestId}` : 'Your inquiry is ready.';
-    const note = document.createElement('p');
-    note.textContent = requestId
-      ? `Our court manager has received your reservation request for ${values.sport}. We will review the schedule and reach out to ${values.phone.trim()} to confirm your court. You can also send this copy via email below.`
-      : 'Open your email app below and send the message to request availability. Your court is not reserved yet. You can also call +63 917 555 7768.';
-    const send = document.createElement('a');
-    send.className = 'btn';
-    send.textContent = 'Open Email Copy ↗';
-    send.href = `mailto:sportszone.talibon@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    feedback.append(title, note, send);
-    feedback.className = 'form-feedback success';
-    feedback.scrollIntoView({ behavior: motion.matches ? 'instant' : 'smooth', block: 'nearest' });
-    drafts.unshift({ sport: values.sport, date: values.date || 'Flexible' });
-    drafts = drafts.slice(0, 4);
-    try { localStorage.setItem(storageKey, JSON.stringify(drafts)); } catch { /* Draft history is optional. */ }
-    renderDrafts();
   });
-  document.getElementById('clear-inquiries-btn').addEventListener('click', () => {
-    drafts = [];
-    try { localStorage.removeItem(storageKey); } catch { /* Clear the in-memory view regardless. */ }
-    renderDrafts();
-  });
-  renderDrafts();
-
   // Filters retain ordinary buttons and expose the selected state to assistive tech.
   const filters = [...document.querySelectorAll('[data-filter]')];
   const courts = [...document.querySelectorAll('.sport-card')];

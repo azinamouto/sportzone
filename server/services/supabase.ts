@@ -107,6 +107,7 @@ function writeLocalStore(items: BookingRequest[]) {
     fs.writeFileSync(DATA_FILE, JSON.stringify(items, null, 2), 'utf-8');
   } catch (error) {
     console.error('[Sports Zone] Error writing local store:', error);
+    throw error;
   }
 }
 
@@ -174,6 +175,7 @@ export const StorageService = {
 
     const newRequest: BookingRequest = {
       id,
+      tracking_token_hash: dto.tracking_token_hash,
       name: dto.name.trim(),
       phone: dto.phone.trim(),
       email: dto.email ? dto.email.trim() : undefined,

@@ -16,9 +16,11 @@ export interface BookingRequest {
   estimated_price?: number;
   created_at: string;
   updated_at: string;
+  tracking_token_hash?: string;
 }
 
 export interface CreateBookingDTO {
+  tracking_token_hash?: string;
   name: string;
   phone: string;
   email?: string;

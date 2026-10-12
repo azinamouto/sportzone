@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { BookingRequestModel } from '../models/BookingRequest.ts';
 import { CreateBookingDTO, UpdateBookingDTO, BookingStatus } from '../types/booking.ts';
 
@@ -76,12 +77,16 @@ export class BookingRequestController {
         message,
       };
 
+      const trackingToken = randomBytes(32).toString('hex');
+      dto.tracking_token_hash = createHash('sha256').update(trackingToken).digest('hex');
       const created = await BookingRequestModel.create(dto);
+      const { tracking_token_hash, ...customerRequest } = created;
 
       return res.status(201).json({
         success: true,
         message: 'Court booking request submitted successfully! Our team will review your slot.',
-        data: created,
+        data: customerRequest,
+        tracking_token: trackingToken,
       });
     } catch (error: any) {
       console.error('[BookingRequestController.store] error:', error);
@@ -90,6 +95,28 @@ export class BookingRequestController {
         message: 'Failed to save booking request',
         error: error?.message || 'Server error',
       });
+    }
+  }
+
+  /** Customer receipt: the reference alone never grants access to a booking. */
+  static async receipt(req: Request, res: Response) {
+    const token = req.get('X-Receipt-Token') || '';
+    if (!/^[a-f0-9]{64}$/.test(token)) {
+      return res.status(404).json({ success: false, message: 'Receipt not found.' });
+    }
+    try {
+      const request = await BookingRequestModel.find(req.params.id);
+      const hash = createHash('sha256').update(token).digest();
+      const stored = Buffer.from(request?.tracking_token_hash || '', 'hex');
+      if (!request || stored.length !== hash.length || !timingSafeEqual(stored, hash)) {
+        return res.status(404).json({ success: false, message: 'Receipt not found.' });
+      }
+      const { id, sport, date, time, duration, status, court_assigned, created_at, updated_at } = request;
+      return res.json({ success: true, data: {
+        id, sport, date, time, duration, status, court_assigned, created_at, updated_at,
+      } });
+    } catch {
+      return res.status(503).json({ success: false, message: 'Status unavailable. Please try again.' });
     }
   }
 

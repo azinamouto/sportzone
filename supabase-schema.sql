@@ -20,6 +20,9 @@ create table if not exists public.booking_requests (
 );
 
 -- Enable Row Level Security (RLS)
+-- Existing inquiries remain admin-only; new receipts use an unguessable token.
+alter table public.booking_requests add column if not exists tracking_token_hash text;
+
 alter table public.booking_requests enable row level security;
 
 -- All access goes through the Express API using its server-only service role.

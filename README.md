@@ -56,6 +56,21 @@ with `delete from public.admin_sessions where expires_at < now();`.
 
 Validation: `npm run build`, `npm run lint`, and `npm test`.
 
+## Customer inquiry receipts
+
+Successful inquiries now show a minimal receipt with pending, confirmed, declined,
+or completed status. The receipt refreshes every 15 seconds while the page is visible
+and checks again when the customer returns. Status changes are announced on the page;
+this does not send SMS, email, or background push notifications.
+Customers can copy their private tracking link to reopen the receipt on another device.
+The latest four receipts are retained in this browser. Treat tracking links as private.
+
+For an existing Supabase deployment, rerun `supabase-schema.sql` before deploying
+this change. It adds `booking_requests.tracking_token_hash` without changing existing
+records. Only newly submitted inquiries receive tracking links; older inquiries
+remain accessible to admins. The public receipt endpoint requires the private token
+and excludes contact information, customer messages, and internal admin notes.
+
 ## Additional dashboard accounts
 
 Keep `ADMIN_EMAIL` and `ADMIN_PASSWORD` for the existing owner login. Add other

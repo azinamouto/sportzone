@@ -15,6 +15,7 @@ router.post('/auth/logout', AuthController.logout);
  * Customer Endpoint: Public court reservation inquiry
  */
 router.post('/requests', BookingRequestController.store);
+router.get('/requests/:id/receipt', BookingRequestController.receipt);
 
 /**
  * Admin Dashboard Protected Endpoints
