@@ -107,6 +107,30 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   const form = document.getElementById('contact-form');
+  const phoneInput = document.getElementById('contact-phone');
+  // Keep phone numbers as text so leading zeroes survive. Sanitize typing,
+  // pasting and autofill without blocking navigation keys or keyboard shortcuts.
+  phoneInput.addEventListener('input', () => {
+    const value = phoneInput.value;
+    const digits = value.replace(/[^0-9]/g, '').slice(0, 12);
+    if (digits === value) return;
+    const start = value.slice(0, phoneInput.selectionStart ?? value.length).replace(/[^0-9]/g, '').length;
+    const end = value.slice(0, phoneInput.selectionEnd ?? value.length).replace(/[^0-9]/g, '').length;
+    phoneInput.value = digits;
+    phoneInput.setSelectionRange(Math.min(start, 12), Math.min(end, 12));
+  });
+  // Strip formatting before maxlength applies, so a pasted country-code number
+  // such as +63 917 123 4567 keeps all twelve digits.
+  phoneInput.addEventListener('paste', event => {
+    if (!event.clipboardData) return;
+    event.preventDefault();
+    const start = phoneInput.selectionStart ?? phoneInput.value.length;
+    const end = phoneInput.selectionEnd ?? start;
+    const available = 12 - (phoneInput.value.length - (end - start));
+    const digits = event.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, Math.max(0, available));
+    phoneInput.setRangeText(digits, start, end, 'end');
+    phoneInput.dispatchEvent(new Event('input', { bubbles: true }));
+  });
   const feedback = document.getElementById('form-feedback');
   const tracker = createReceiptTracker();
   const dateInput = document.getElementById('contact-date');

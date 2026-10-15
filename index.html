@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="./assets/logo.png" />
     <title>Sports Zone | Purok 2, San Francisco, Talibon, Bohol</title>
     <meta name="description" content="Sports Zone athletic and recreation facility located in Purok 2, San Francisco, Talibon, Bohol. Basketball, badminton, volleyball, and pickleball court rentals, fitness, and community sports." />
     <meta property="og:title" content="Sports Zone - Talibon, Bohol" />
@@ -23,7 +24,7 @@
       <nav id="navbar" aria-label="Main Navigation">
         <a href="#home" class="logo-link">
           <div class="logo-group">
-            <span class="logo-text" id="logo"><span class="brand-mark" aria-hidden="true">/</span> SPORTS<span>ZONE</span></span>
+            <span class="logo-text" id="logo"><img class="brand-logo" src="./assets/logo.png" alt="" width="48" height="44" /> SPORTS<span>ZONE</span></span>
 
           </div>
         </a>
@@ -394,8 +395,13 @@
                     type="tel"
                     id="contact-phone"
                     name="phone" autocomplete="tel"
+                    inputmode="numeric"
+                    pattern="[0-9]{12}"
+                    minlength="12"
+                    maxlength="11"
+                    title="Enter exactly 12 digits (0-9), including the country code."
                     class="form-input"
-                    placeholder="e.g. 0917 123 4567"
+                    placeholder="e.g. 639171234567"
                     required
                   />
                 </div>
@@ -485,7 +491,7 @@
       <div class="container footer-content">
         <div class="footer-brand">
           <div class="logo-text">
-            <span class="brand-mark">/</span>SPORTS ZONE
+            <img class="brand-logo" src="./assets/logo.png" alt="" width="48" height="44" />SPORTS ZONE
           </div>
           <p class="footer-tagline">
             Your neighborhood center for sports, fitness, and team play in <strong>Purok 2, San Francisco, Talibon, Bohol</strong>.

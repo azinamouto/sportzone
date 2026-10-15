@@ -52,10 +52,10 @@ export class BookingRequestController {
         });
       }
 
-      if (!phone || typeof phone !== 'string' || !phone.trim()) {
+      if (typeof phone !== 'string' || phone.length !== 12 || !/^[0-9]{12}$/.test(phone)) {
         return res.status(422).json({
           success: false,
-          errors: { phone: ['A valid mobile contact number is required.'] },
+          errors: { phone: ['The contact number must contain exactly 12 digits.'] },
         });
       }
 

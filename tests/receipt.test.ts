@@ -38,14 +38,21 @@ test('private receipts follow admin decisions without exposing customer or admin
   const base = `http://127.0.0.1:${address.port}/api`;
   const jsonHeaders = { 'Content-Type': 'application/json' };
   try {
-    const submit = () => fetch(`${base}/requests`, {
+    const submit = (phone: unknown = '012345678901') => fetch(`${base}/requests`, {
       method: 'POST', headers: jsonHeaders,
-      body: JSON.stringify({ name: 'Customer', phone: '09123456789', email: 'customer@test.invalid',
+      body: JSON.stringify({ name: 'Customer', phone, email: 'customer@test.invalid',
         sport: 'Basketball', message: 'Private customer message', tracking_token_hash: 'forged' }),
     });
+    for (const invalid of ['', '09123456789', '6391234567890', '63912345678a', '+639123456789', '639 123456789', '63912345678.9', '639123456789\n', 639123456789, null]) {
+      const rejected = await submit(invalid);
+      assert.equal(rejected.status, 422);
+      assert.deepEqual((await rejected.json()).errors.phone, ['The contact number must contain exactly 12 digits.']);
+    }
+    assert.equal(records.size, 0, 'Invalid phone numbers must not reach storage');
     const created = await submit();
     assert.equal(created.status, 201);
     const { data, tracking_token: token } = await created.json();
+    assert.equal(data.phone, '012345678901', 'Leading zeroes must be preserved');
     assert.match(token, /^[a-f0-9]{64}$/);
     assert.equal(data.tracking_token_hash, undefined);
     assert.equal(records.get(data.id)?.tracking_token_hash, createHash('sha256').update(token).digest('hex'));
