@@ -1,7 +1,9 @@
 import { createReceiptTracker } from './receipt.js';
 import { initHomepageMotion } from './homepage-motion.js';
+import { initBackgroundMusic } from './background-music.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+  initBackgroundMusic();
   const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const header = document.getElementById('header');
   const toggle = document.getElementById('mobile-toggle');
