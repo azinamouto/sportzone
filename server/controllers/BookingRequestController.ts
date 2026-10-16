@@ -52,10 +52,10 @@ export class BookingRequestController {
         });
       }
 
-      if (typeof phone !== 'string' || phone.length !== 12 || !/^[0-9]{12}$/.test(phone)) {
+      if (typeof phone !== 'string' || phone.length !== 11 || !/^[0-9]{11}$/.test(phone)) {
         return res.status(422).json({
           success: false,
-          errors: { phone: ['The contact number must contain exactly 12 digits.'] },
+          errors: { phone: ['The contact number must contain exactly 11 digits.'] },
         });
       }
 
