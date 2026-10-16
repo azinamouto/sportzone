@@ -13,6 +13,68 @@ delete process.env.VERCEL;
 const { default: app } = await import('../server/app.ts');
 const { BookingRequestModel: Model } = await import('../server/models/BookingRequest.ts');
 
+test('private payment preferences persist without changing booking or payment status', async () => {
+  const originalFind = Model.find;
+  const originalUpdate = Model.update;
+  const token = 'a'.repeat(64);
+  const record: BookingRequest = {
+    id: 'SZ-PAYMENT-TEST', name: 'Payment Test', phone: '09171234567', sport: 'Basketball',
+    duration: 1, status: 'pending', admin_notes: 'Private note', created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(), tracking_token_hash: createHash('sha256').update(token).digest('hex'),
+  };
+  let writes = 0;
+  Model.find = async id => id === record.id ? record : null;
+  Model.update = async (id, updates) => {
+    assert.equal(id, record.id);
+    assert.deepEqual(Object.keys(updates), ['payment_method']);
+    writes++;
+    Object.assign(record, updates);
+    return record;
+  };
+  const server = app.listen(0, '127.0.0.1');
+  await new Promise<void>(resolve => server.once('listening', resolve));
+  const address = server.address();
+  assert.ok(address && typeof address !== 'string');
+  const base = `http://127.0.0.1:${address.port}/api/requests/${record.id}`;
+  const save = (method: unknown, credential = token) => fetch(`${base}/payment-method`, {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json', 'X-Receipt-Token': credential },
+    body: JSON.stringify({ payment_method: method, status: 'confirmed', admin_notes: 'forged', payment_status: 'paid' }),
+  });
+  try {
+    for (const credential of ['', 'bad', 'b'.repeat(64)]) assert.equal((await save('cash', credential)).status, 404);
+    for (const method of ['', 'crypto', 'constructor', '__proto__', null, 1]) assert.equal((await save(method)).status, 422);
+    assert.equal(writes, 0);
+    for (const method of ['cash', 'card', 'gcash', 'other']) {
+      const response = await save(method);
+      assert.equal(response.status, 200);
+      assert.equal(response.headers.get('cache-control'), 'no-store');
+      const result = await response.json();
+      assert.equal(result.data.payment_method, method);
+      assert.deepEqual(Object.keys(result.data).sort(), ['id', 'payment_method', 'updated_at']);
+      const receipt = await (await fetch(`${base}/receipt`, { headers: { 'X-Receipt-Token': token } })).json();
+      assert.equal(receipt.data.payment_method, method);
+      assert.equal(record.status, 'pending');
+      assert.equal(record.admin_notes, 'Private note');
+      assert.equal('payment_status' in record, false);
+    }
+    for (const status of ['completed', 'rejected'] as const) {
+      record.status = status;
+      assert.equal((await save('cash')).status, 409);
+    }
+    record.status = 'confirmed';
+    assert.equal((await save('cash')).status, 200);
+    Model.update = async () => { throw new Error('Test storage unavailable'); };
+    assert.equal((await save('card')).status, 503);
+    assert.equal(record.payment_method, 'cash');
+    record.tracking_token_hash = undefined;
+    assert.equal((await save('card')).status, 404);
+  } finally {
+    Model.find = originalFind;
+    Model.update = originalUpdate;
+    await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
+  }
+});
+
 test('private receipts follow admin decisions without exposing customer or admin data', async () => {
   const originals = { create: Model.create, find: Model.find, update: Model.update };
   const records = new Map<string, BookingRequest>();

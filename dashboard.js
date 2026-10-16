@@ -1,6 +1,8 @@
 // Sports Zone Admin Dashboard Client Logic
 // Refined, compact SaaS layout with unclipped floating actions and responsive mobile cards
 
+import { paymentMethodLabel } from './payment-methods.js';
+
 document.addEventListener('DOMContentLoaded', () => {
   const loginView = document.getElementById('login-view');
   const dashboardView = document.getElementById('dashboard-view');
@@ -445,6 +447,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <td>
             <div class="fee-amount">₱${req.estimated_price ? req.estimated_price.toLocaleString() : '—'}</div>
             <div class="fee-sub">est. fee</div>
+            <div class="fee-sub">Payment: ${paymentMethodLabel(req.payment_method)}</div>
           </td>
 
           <!-- 6. Status -->
@@ -526,6 +529,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div>
               <div class="dash-stat-label">Est. Fee</div>
+              <div class="fee-sub">Payment: ${paymentMethodLabel(req.payment_method)}</div>
               <div class="fee-amount" style="margin-top: 0.15rem;">₱${req.estimated_price ? req.estimated_price.toLocaleString() : '—'}</div>
             </div>
             <div>
@@ -680,6 +684,7 @@ document.addEventListener('DOMContentLoaded', () => {
     detailPrice.textContent = req.estimated_price ? `Estimated Price: ₱${req.estimated_price.toLocaleString()}` : 'Custom rate';
 
     detailMessage.textContent = req.message || 'No additional note provided by customer.';
+    document.getElementById('detail-payment').textContent = `Preferred payment: ${paymentMethodLabel(req.payment_method)}`;
     detailCourt.textContent = req.court_assigned ? `📍 Court Allocated: ${req.court_assigned}` : '📍 Court: Not yet assigned';
     detailNotes.textContent = req.admin_notes ? `📝 Staff Note: ${req.admin_notes}` : '📝 Staff Note: None';
 

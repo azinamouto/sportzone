@@ -466,6 +466,20 @@
             <div id="inquiry-receipt" class="inquiry-receipt" role="region" aria-labelledby="receipt-heading" tabindex="-1" hidden>
               <h3 id="receipt-heading">Inquiry receipt</h3>
               <div id="receipt-content"></div>
+              <form id="receipt-payment-form" class="receipt-payment-form" hidden>
+                <fieldset>
+                  <legend>Preferred payment method</legend>
+                  <p class="receipt-hint">Choose how you would like to pay. No payment is collected here.</p>
+                  <div class="payment-options">
+                    <label><input type="radio" name="payment_method" value="cash" required /> Cash</label>
+                    <label><input type="radio" name="payment_method" value="card" required /> Card</label>
+                    <label><input type="radio" name="payment_method" value="gcash" required /> GCash</label>
+                    <label><input type="radio" name="payment_method" value="other" required /> Other</label>
+                  </div>
+                  <button type="submit" class="btn btn-secondary">Save payment method</button>
+                </fieldset>
+                <p id="payment-feedback" class="receipt-notice" role="status" aria-live="polite"></p>
+              </form>
               <div class="receipt-actions">
                 <button type="button" id="receipt-copy" class="btn">Copy tracking link</button>
                 <button type="button" id="receipt-refresh" class="btn-text-clear">Refresh</button>

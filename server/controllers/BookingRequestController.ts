@@ -2,6 +2,17 @@ import { Request, Response } from 'express';
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { BookingRequestModel } from '../models/BookingRequest.ts';
 import { CreateBookingDTO, UpdateBookingDTO, BookingStatus } from '../types/booking.ts';
+import type { PaymentMethod } from '../types/booking.ts';
+import { PAYMENT_METHODS } from '../../payment-methods.js';
+
+async function findPrivateReceipt(req: Request) {
+  const token = req.get('X-Receipt-Token') || '';
+  if (!/^[a-f0-9]{64}$/.test(token) || token.length !== 64) return null;
+  const request = await BookingRequestModel.find(req.params.id);
+  const hash = createHash('sha256').update(token).digest();
+  const stored = Buffer.from(request?.tracking_token_hash || '', 'hex');
+  return request && stored.length === hash.length && timingSafeEqual(stored, hash) ? request : null;
+}
 
 /**
  * Controller handling customer court inquiries & Admin operations
@@ -100,23 +111,41 @@ export class BookingRequestController {
 
   /** Customer receipt: the reference alone never grants access to a booking. */
   static async receipt(req: Request, res: Response) {
-    const token = req.get('X-Receipt-Token') || '';
-    if (!/^[a-f0-9]{64}$/.test(token)) {
-      return res.status(404).json({ success: false, message: 'Receipt not found.' });
-    }
     try {
-      const request = await BookingRequestModel.find(req.params.id);
-      const hash = createHash('sha256').update(token).digest();
-      const stored = Buffer.from(request?.tracking_token_hash || '', 'hex');
-      if (!request || stored.length !== hash.length || !timingSafeEqual(stored, hash)) {
+      const request = await findPrivateReceipt(req);
+      if (!request) {
         return res.status(404).json({ success: false, message: 'Receipt not found.' });
       }
-      const { id, sport, date, time, duration, status, court_assigned, created_at, updated_at } = request;
+      const { id, sport, date, time, duration, status, court_assigned, created_at, updated_at, payment_method } = request;
       return res.json({ success: true, data: {
         id, sport, date, time, duration, status, court_assigned, created_at, updated_at,
+        payment_method: payment_method || null,
       } });
     } catch {
       return res.status(503).json({ success: false, message: 'Status unavailable. Please try again.' });
+    }
+  }
+
+  /** Records a preference only. The private token cannot change admin fields. */
+  static async paymentMethod(req: Request, res: Response) {
+    try {
+      const request = await findPrivateReceipt(req);
+      if (!request) return res.status(404).json({ success: false, message: 'Receipt not found.' });
+      const method = req.body?.payment_method;
+      if (typeof method !== 'string' || !Object.hasOwn(PAYMENT_METHODS, method)) {
+        return res.status(422).json({ success: false, message: 'Choose Cash, Card, GCash, or Other.' });
+      }
+      if (request.status === 'completed' || request.status === 'rejected') {
+        return res.status(409).json({ success: false, message: 'Payment preferences are closed for this inquiry.' });
+      }
+      const updated = await BookingRequestModel.update(request.id, { payment_method: method as PaymentMethod });
+      if (!updated) return res.status(404).json({ success: false, message: 'Receipt not found.' });
+      return res.json({ success: true, data: {
+        id: updated.id, payment_method: updated.payment_method, updated_at: updated.updated_at,
+      } });
+    } catch (error) {
+      console.error('[BookingRequestController.paymentMethod] error:', error);
+      return res.status(503).json({ success: false, message: 'Unable to save your payment method. Please try again.' });
     }
   }
 

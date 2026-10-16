@@ -1,4 +1,5 @@
 export type BookingStatus = 'pending' | 'confirmed' | 'rejected' | 'completed';
+export type PaymentMethod = 'cash' | 'card' | 'gcash' | 'other';
 
 export interface BookingRequest {
   id: string;
@@ -17,6 +18,7 @@ export interface BookingRequest {
   created_at: string;
   updated_at: string;
   tracking_token_hash?: string;
+  payment_method?: PaymentMethod | null;
 }
 
 export interface CreateBookingDTO {
@@ -32,6 +34,7 @@ export interface CreateBookingDTO {
 }
 
 export interface UpdateBookingDTO {
+  payment_method?: PaymentMethod;
   status?: BookingStatus;
   admin_notes?: string;
   court_assigned?: string;

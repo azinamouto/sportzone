@@ -16,6 +16,7 @@ router.post('/auth/logout', AuthController.logout);
  */
 router.post('/requests', BookingRequestController.store);
 router.get('/requests/:id/receipt', BookingRequestController.receipt);
+router.patch('/requests/:id/payment-method', BookingRequestController.paymentMethod);
 
 /**
  * Admin Dashboard Protected Endpoints

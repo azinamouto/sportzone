@@ -235,6 +235,8 @@ export const StorageService = {
           .maybeSingle();
 
         if (!error && !data) return null;
+        // A payment preference must stay in the same store as its inquiry.
+        if (error && updates.payment_method !== undefined) throw error;
         if (!error && data) {
           if (process.env.VERCEL) return data as BookingRequest;
           const local = ensureLocalStore();
@@ -247,6 +249,7 @@ export const StorageService = {
         }
       } catch (err) {
         console.warn('[Sports Zone] Supabase update error:', err);
+        if (updates.payment_method !== undefined) throw err;
       }
     }
 

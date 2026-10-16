@@ -71,6 +71,19 @@ records. Only newly submitted inquiries receive tracking links; older inquiries
 remain accessible to admins. The public receipt endpoint requires the private token
 and excludes contact information, customer messages, and internal admin notes.
 
+## Preferred payment method
+
+After submitting an inquiry, clients can select Cash, Card, GCash, or Other in
+their private receipt and save the choice. This records a preference only; it
+does not charge the client or mark an inquiry as paid. Staff arrange payment.
+The choice is shown in the admin table, mobile cards, and inquiry details, and
+can be changed while the inquiry is pending or confirmed.
+
+Before deploying to an existing Supabase project, run
+`migrations/20261016_payment_method.sql` in its SQL Editor. New installations
+can use the updated `supabase-schema.sql`. Existing inquiries start with no
+payment choice. Local JSON storage supports the field without a migration.
+
 ## Additional dashboard accounts
 
 Keep `ADMIN_EMAIL` and `ADMIN_PASSWORD` for the existing owner login. Add other

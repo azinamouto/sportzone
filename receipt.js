@@ -1,3 +1,6 @@
+import { createPaymentChooser } from './receipt-payment.js';
+import { paymentMethodLabel } from './payment-methods.js';
+
 // A compact receipt uses the site's type and palette. Status, slot and a saved
 // private link are the only customer details; internal notes stay on the server.
 export function createReceiptTracker() {
@@ -21,6 +24,15 @@ export function createReceiptTracker() {
   let checking = false;
   const errors = new Map();
   let contentSignature = '';
+  const paymentRevisions = new Map();
+  const paymentChooser = createPaymentChooser((receipt, data) => {
+    if (!receipts.includes(receipt)) return;
+    receipt.payment_method = data.payment_method;
+    receipt.updated_at = data.updated_at;
+    paymentRevisions.set(receipt.id, (paymentRevisions.get(receipt.id) || 0) + 1);
+    persist();
+    render();
+  });
   try {
     const saved = JSON.parse(localStorage.getItem(key) || '[]');
     if (Array.isArray(saved)) receipts = saved.filter(item => item &&
@@ -37,6 +49,7 @@ export function createReceiptTracker() {
   function render() {
     const receipt = receipts.find(item => item.id === activeId);
     panel.hidden = !receipt;
+    paymentChooser.setReceipt(receipt);
     historyPanel.hidden = receipts.length < 2;
     const existingButtons = new Map([...history.children].map(button => [button.dataset.receiptId, button]));
     for (const [id, button] of existingButtons) {
@@ -75,6 +88,7 @@ export function createReceiptTracker() {
     message.textContent = errors.get(receipt.id) || messages[receipt.status] || 'Loading your receipt.';
     const details = document.createElement('dl');
     const fields = [['Reference', receipt.id]];
+    fields.push(['Payment method', paymentMethodLabel(receipt.payment_method)]);
     if (receipt.sport) fields.push(['Court', receipt.court_assigned || receipt.sport]);
     if (receipt.status) {
       fields.push(['Requested slot', `${receipt.date || 'Flexible date'} · ${receipt.time || 'Flexible time'}`]);
@@ -98,6 +112,7 @@ export function createReceiptTracker() {
     refresh.textContent = 'Checking…';
     const activeAtStart = activeId;
     const results = await Promise.all(receipts.map(async receipt => {
+      const paymentRevision = paymentRevisions.get(receipt.id) || 0;
       try {
         const response = await fetch(`/api/requests/${encodeURIComponent(receipt.id)}/receipt`, {
           headers: { 'X-Receipt-Token': receipt.token }, cache: 'no-store',
@@ -112,6 +127,10 @@ export function createReceiptTracker() {
         if (!receipts.includes(receipt)) return;
         const changed = receipt.status && receipt.status !== result.data.status;
         errors.delete(receipt.id);
+        // A status poll started before a save must not replace the newer choice.
+        if (paymentRevision !== (paymentRevisions.get(receipt.id) || 0)) {
+          result.data.payment_method = receipt.payment_method;
+        }
         Object.assign(receipt, result.data);
         return { id: receipt.id, changed, text: `${receipt.sport}: ${labels[receipt.status]}. ${messages[receipt.status]}` };
       } catch (error) {
@@ -164,6 +183,8 @@ export function createReceiptTracker() {
     }
   });
   document.getElementById('clear-inquiries-btn').addEventListener('click', () => {
+    paymentChooser.clear();
+    paymentRevisions.clear();
     receipts = [];
     activeId = undefined;
     persist();
@@ -182,8 +203,8 @@ export function createReceiptTracker() {
 
   return {
     add(data, token) {
-      const { id, sport, date, time, duration, status, court_assigned, created_at, updated_at } = data;
-      receipts = [{ id, sport, date, time, duration, status, court_assigned, created_at, updated_at, token },
+      const { id, sport, date, time, duration, status, court_assigned, created_at, updated_at, payment_method } = data;
+      receipts = [{ id, sport, date, time, duration, status, court_assigned, created_at, updated_at, payment_method, token },
         ...receipts.filter(item => item.id !== id)].slice(0, 4);
       activeId = id;
       persist();
